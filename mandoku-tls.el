@@ -18,7 +18,7 @@
 (require 'mandoku)
 (require 'mandoku-dict)
 (require 'mandoku-annot)
-(require 'helm-charinfo)
+;(require 'helm-charinfo)
 (require 'subr-x)
 
 ;;; Code:
@@ -27,7 +27,7 @@
   (or mandoku-base-dir
       (replace-in-string (file-name-directory (or byte-compile-current-file
                                              load-file-name
-                                             buffer-file-name)) "mandoku/lisp/" "")))
+                                             buffer-file-name)) "mandoku-tls/" "")))
 
 (defcustom mandoku-tls-lexicon-path
   (concat mandoku-tls-root-path "tls/lexicon/")
@@ -691,8 +691,9 @@ When called without argument, use the current buffer file."
 	  )))
 
 
-
+;;;###autoload
 (defun mandoku-tls-initialize ()
+  (interactive)
   (if (file-exists-p mandoku-tls-lexicon-path)
       (unless mandoku-tls-initialized-p
 	(message "Reading the TLS database.  This will take a moment.")
@@ -704,7 +705,11 @@ When called without argument, use the current buffer file."
 	(mandoku-tls-read-syllables-org)
 	(setq mandoku-tls-initialized-p t)
 	(message "Finished reading the TLS database.  Ready to go!"))
-    (message "TLS database not found. Please clone the necessary files first."))
+    (when (yes-or-no-p
+	   "TLS database not found. Do you want to get it now? ")
+      (mandoku-clone-repo "tls-kr/tls-org" (concat mandoku-tls-root-path "tls"))
+      (mandoku-tls-initialize)
+	))
 )
 
 (defun mandoku-tls-show-words (&optional uuid-hw)
