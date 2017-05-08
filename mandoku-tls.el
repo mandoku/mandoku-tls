@@ -11,12 +11,18 @@
 ;; Package-Requires: ((emacs "24.4") (mandoku "20170301") (github-clone "20150705.1705"))
 ;; This file is not part of GNU Emacs.
 
+
+;;; Commentary:
+;; 
+
 (require 'mandoku)
 (require 'mandoku-dict)
 (require 'mandoku-annot)
 (require 'helm-charinfo)
 (require 'subr-x)
-;; TODO: this needs to be fixed!  Does not work when packaged!
+
+;;; Code:
+
 (defvar mandoku-tls-root-path
   (or mandoku-base-dir
       (replace-in-string (file-name-directory (or byte-compile-current-file
@@ -25,13 +31,13 @@
 
 (defcustom mandoku-tls-lexicon-path
   (concat mandoku-tls-root-path "tls/lexicon/")
-  "Path to TLS lexicon"
+  "Path to TLS lexicon."
   :type 'string
   :group 'mandoku-tls)
 
 (defcustom mandoku-tls-text-path
   mandoku-text-dir
-  "Path to TLS texts, this should generally be the same as the `mandoku-text-dir`"
+  "Path to TLS texts, this should generally be the same as the `mandoku-text-dir`."
   :type 'string
   :group 'mandoku-tls)
 
@@ -43,7 +49,7 @@
 
 (defcustom mandoku-tls-concept-template
   (concat mandoku-tls-lexicon-path "core/concept-template.org")
-  "Filename for template for concepts"
+  "Filename for template for concepts."
   :type 'string
   :group 'mandoku-tls)
   
@@ -60,52 +66,52 @@
 
 ;; core lexicon
 (defvar mandoku-tls-zhu-path (concat mandoku-tls-lexicon-path "notes/zhu/")
-  "The 'zhu' notes compiled from the TLS texts are stored here. ")
+  "The 'zhu' notes compiled from the TLS texts are stored here.")
 (defvar mandoku-tls-zhu-tab-buffer nil
-  "This is the file for writing out the index of zhu, the name will usually be the same as given in `mandoku-tls-syn-word-locs`")
+  "This is the file for writing out the index of zhu, the name will usually be the same as given in `mandoku-tls-syn-word-locs`.")
 (defvar mandoku-tls-syn-word-locs (concat mandoku-tls-lexicon-path "index/swl.txt")
-  "The syntactical word locations, an index to the notes in notes/zhu/*.zhu")
+  "The syntactical word locations, an index to the notes in notes/zhu/*.zhu.")
 ;(defvar mandoku-tls-syn-words (concat mandoku-tls-lexicon-path "core/syntactic-words.org") "")
 (defvar mandoku-tls-syn-func-org (concat mandoku-tls-lexicon-path "core/syn-func.org")
-  "Syntactic functions in TLS")
+  "Syntactic functions in TLS.")
 (defvar mandoku-tls-syn-func-index (concat mandoku-tls-lexicon-path "index/syn-func.txt")
-  "Index to syntactic functions")
+  "Index to syntactic functions.")
 (defvar mandoku-tls-sem-feat-org (concat mandoku-tls-lexicon-path "core/sem-feat.org")
-  "Semantic features in TLS")
+  "Semantic features in TLS.")
 (defvar mandoku-tls-rhet-dev-org (concat mandoku-tls-lexicon-path "core/rhet-dev.org")
-  "Rhetorical devices in TLS")
+  "Rhetorical devices in TLS.")
 (defvar mandoku-tls-word-rel-org (concat mandoku-tls-lexicon-path "core/word-rel.org")
-  "Word relations in TLS")
+  "Word relations in TLS.")
 (defvar mandoku-tls-comp-types-org (concat mandoku-tls-lexicon-path "core/compound-types.org")
-  "Compound types in TLS")
-(defvar mandoku-tls-syllables-org (concat mandoku-tls-lexicon-path "core/syllables.org") "Syllables")
-(defvar  mandoku-tls-syllables-index (concat mandoku-tls-lexicon-path "index/syllables.txt") "Index to syllables")
+  "Compound types in TLS.")
+(defvar mandoku-tls-syllables-org (concat mandoku-tls-lexicon-path "core/syllables.org") "Syllables.")
+(defvar  mandoku-tls-syllables-index (concat mandoku-tls-lexicon-path "index/syllables.txt") "Index to syllables.")
 
 (defvar mandoku-tls-initialized-p nil "Say whether TLS has been initialized.")
 
 
 (defvar mandoku-tls-swl nil
-  "Hash table of syntax word locations")
-(defvar mandoku-tls-character-tab nil "Hash table for character radical and strokecount")
+  "Hash table of syntax word locations.")
+(defvar mandoku-tls-character-tab nil "Hash table for character radical and strokecount.")
 (defvar mandoku-tls-words nil
-  "Hash table of syntax words")
+  "Hash table of syntax words.")
 (defvar mandoku-tls-concepts nil
-  "Hash table index for concepts")
+  "Hash table index for concepts.")
 (defvar mandoku-tls-concept-words nil
-  "Hash table for words in concepts")
+  "Hash table for words in concepts.")
 (defvar mandoku-tls-pos-info nil
-  "Hash table of POS info, such as syntactic function or semantic feature occurrences in mandoku-tls-words")
+  "Hash table of POS info, such as syntactic function or semantic feature occurrences in `mandoku-tls-words'.")
 (defvar mandoku-tls-syn-func-tab nil
-  "Hash table of syn-func file for helm")
-(defvar mandoku-tls-syllables-tab nil "Syllables")
-(defvar mandoku-tls-syllables-uuid nil "Syllables by uuid")
+  "Hash table of syn-func file for helm.")
+(defvar mandoku-tls-syllables-tab nil "Syllables.")
+(defvar mandoku-tls-syllables-uuid nil "Syllables by uuid.")
 (defvar mandoku-tls-inp-ok-p t "Are we allowed to input?")
 (defvar mandoku-tls-inp nil)
 (defvar mandoku-tls-current-char "逳")
 (defvar mandoku-tls-chant-titles nil "Title table for CHANT titles.")
 
-(defun mandoku-tls-read-characters-tab () 
-  "Read the character table"
+(defun mandoku-tls-read-characters-tab ()
+  "Read the character table."
   (setq mandoku-tls-character-tab (make-hash-table :test 'equal))
   (let ((ct (concat mandoku-tls-lexicon-path "core/characters.tab")))
   (when (file-exists-p ct)
@@ -116,8 +122,8 @@
 	    (puthash char (format "(%s,%s/%s)" (nth 2 tmp) (nth 3 tmp) (nth 4 tmp) )
 		     mandoku-tls-character-tab)))))))
 
-(defun mandoku-tls-read-syllables-org () 
-  "read the syllables table"
+(defun mandoku-tls-read-syllables-org ()
+  "Read the syllables table."
   (setq mandoku-tls-syllables-tab (make-hash-table :test 'equal))
   (setq mandoku-tls-syllables-uuid (make-hash-table :test 'equal))
   (message "Starting to read the syllables.")
@@ -156,10 +162,10 @@
 		 (insert
 		  (format "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n"
 			  k
-			  (plist-get v :uuid) 
-			  (plist-get v :pinyin) 
-			  (plist-get v :oc) 
-			  (plist-get v :mc) 
+			  (plist-get v :uuid)
+			  (plist-get v :pinyin)
+			  (plist-get v :oc)
+			  (plist-get v :mc)
 			  (plist-get v :fqshang)
 			  (plist-get v :fqxia)
 			  (plist-get v :diao)
@@ -171,12 +177,12 @@
 
 
 (defun mandoku-tls-get-sylable-item ()
-  ""
+  "."
   (save-excursion
   (let* ((hw (split-string (mandoku-tls-get-special-line-rest (point) "= ") ))
 	 (ch (car hw))
 	(uuid (mandoku-tls-get-special-line-rest (save-excursion (search-forward "CUSTOM_ID:" nil t)) ": "))
-	syll cat 
+	syll cat
 	beg end )
     (message ch)
     (setq syll (plist-put syll :pinyin (cadr hw )))
@@ -208,8 +214,8 @@
 	  (puthash char (cons syll (gethash char mandoku-tls-syllables-tab)) mandoku-tls-syllables-tab)
 	(puthash char (cons syll nil) mandoku-tls-syllables-tab))))))
 
-(defun mandoku-tls-read-syn-func-org () 
-  "read the syntactic functions table"
+(defun mandoku-tls-read-syn-func-org ()
+  "Read the syntactic functions table."
   (setq mandoku-tls-syn-func-tab (make-hash-table :test 'equal))
   (message "Starting to read the syntactical functions.")
   ;(measure-time
@@ -236,7 +242,7 @@
 		 (insert
 		  (format "%s\t%s\t%s\n$$\n"
 			  k
-			  (plist-get v :name) 
+			  (plist-get v :name)
 			  (plist-get v :def))))
 		  mandoku-tls-syn-func-tab)
 		 (save-buffer)
@@ -244,12 +250,13 @@
   (message "Finished reading the syntactical functions."))
 
 (defun mandoku-tls-get-special-line-rest (p sp)
-  "Avoid using the corresponding org function. sp is the split-value."
+  "Avoid using the corresponding org function.  Argument P The value to be split.  SP is the split-value."
   (save-excursion
     (goto-char p)
     (mandoku-trim-and-star (cadr (split-string (thing-at-point 'line t) sp)))))
 
 (defun mandoku-tls-get-syn-func-item ()
+  "This extracts the syn-func from a line with a link."
   (save-excursion
   (let ((hw (mandoku-tls-get-special-line-rest (point) "= "))
 	(uuid (mandoku-tls-get-special-line-rest (save-excursion (search-forward "CUSTOM_ID:" nil t)) ": "))
@@ -263,13 +270,16 @@
     (puthash uuid (list :name hw :def def) mandoku-tls-syn-func-tab))))
 
 (defun mandoku-tls-read-zhu-to-swl-file ()
-  "We set mandoku-tls-zhu-tab-file to a file we want to write to, then call mandoku-tls-read-zhu-dir"
+  "We set mandoku-tls-zhu-tab-file to a file we want to write to, then call `mandoku-tls-read-zhu-dir'."
   (setq mandoku-tls-zhu-tab-buffer (find-file-noselect mandoku-tls-syn-word-locs))
   (with-current-buffer mandoku-tls-zhu-tab-buffer
     (erase-buffer))
   (mandoku-tls-read-zhu-dir))
 
 (defun mandoku-tls-read-zhu-dir (&optional dir)
+  "This reads all files in the zhu directory into a hashtable.
+The reading is done by mandoku-tls-read-zhu-file.
+Optional argument DIR Use DIR instead of the default directory."
   (let ((d (or dir mandoku-tls-zhu-path)))
     (unless mandoku-tls-zhu-tab-buffer
       (setq mandoku-tls-swl (make-hash-table :test 'equal)))
@@ -280,14 +290,15 @@
 
 
 (defun mandoku-tls-read-zhu-file (file)
-  ""
+  ".
+Argument FILE The file to be read."
   (when (file-exists-p file)
     (with-current-buffer (find-file-noselect file)
       (org-map-entries 'mandoku-tls-get-zhu-item "+LEVEL<=2" nil)
       (kill-buffer))))
 
 (defun mandoku-tls-get-zhu-item-debug ()
-  "First find the concepts with not uuid"
+  "First find the concepts with not uuid."
   (while (search-forward "*** " nil t)
     (unless (org-entry-get (point) "CONCEPT")
       (message (format "%s %s" (buffer-file-name)  (point))))))
@@ -297,7 +308,7 @@
   (let ((hl (substring-no-properties (org-get-heading t t)))
 	(p (point))
 	(src (org-entry-get (point) "SRC"))
-	(date (org-entry-get (point) "DATE")) 
+	(date (org-entry-get (point) "DATE"))
 	(loc  (split-string (org-entry-get (point) "LOCATION") " / "))
 	(end (org-end-of-subtree))
 	concept line char
@@ -316,7 +327,7 @@
 	    (with-current-buffer mandoku-tls-zhu-tab-buffer
 	      (insert
 	       (format "%s\t%s##%s##%s##%s##%s\n"
-		       concept (string-join loc "##") date src char hl 
+		       concept (string-join loc "##") date src char hl
 		       )))
 	  (if (gethash concept mandoku-tls-swl)
 	      (puthash concept (cons line (gethash concept mandoku-tls-swl))  mandoku-tls-swl)
@@ -324,8 +335,8 @@
     )))
 
     
-(defun mandoku-tls-read-swl () 
-  "read the syntactic word locations table"
+(defun mandoku-tls-read-swl ()
+  "Read the syntactic word locations table."
   (setq mandoku-tls-swl (make-hash-table :test 'equal))
   (when (file-exists-p mandoku-tls-syn-word-locs)
     (with-temp-buffer
@@ -342,7 +353,7 @@
 		(title (cadr loc))
 		(date (nth 2 loc))
 		(src (nth 3 loc))
-		line 
+		line
 		tchar)
 	    (setq line (plist-put line :line (concat "[[mandoku:" textid "][" title "]]\t" (nth 5 loc))))
 	    (setq line (plist-put line :date date))
@@ -353,7 +364,7 @@
 	    ))))))
 
 ;; this is obsolete and not used anymore, see mandoku-tls-read-concepts
-;; (defun mandoku-tls-read-synwords () 
+;; (defun mandoku-tls-read-synwords ()
 ;;   "read the syntactic words table"
 ;;   (setq mandoku-tls-words (make-hash-table :test 'equal))
 ;;   (setq mandoku-tls-pos-info (make-hash-table :test 'equal))
@@ -397,7 +408,7 @@
 
 
 (defun mandoku-tls-read-concepts ()
-  "Read the concept files into the hash table"
+  "Read the concept files into the hash table."
   ;; all these hashtables are populated here from the concepts files
   (setq mandoku-tls-concepts (make-hash-table :test 'equal))
   (setq mandoku-tls-concept-words (make-hash-table :test 'equal))
@@ -409,7 +420,7 @@
   (mandoku-tls-concepts-add-uplink))
 ;;[2017-04-20T15:41:32+0900] TODO: also need to add up-links to those in "N/A" that do not have an uplink yet...
 (defun mandoku-tls-concepts-add-uplink ()
-  ;; now add the uplink to those concepts referenced in "NARROW CONCEPTS"
+  "Now add the uplink to those concepts referenced in \"NARROW CONCEPTS\"."
   (maphash (lambda (k v)
 	     (dolist (p (cdr (assoc "TAXONOMY" (plist-get v :pointers))))
 	       (setq h (gethash p mandoku-tls-concepts))
@@ -429,7 +440,7 @@
 )
 
 (defun mandoku-tls-read-concept-file (&optional file)
-  "Read one concept file into the hash tables.
+  "Read one concept FILE into the hash tables.
 When called without argument, use the current buffer file."
   (setq file (or file (buffer-file-name)))
   (when (file-exists-p file)
@@ -471,7 +482,7 @@ When called without argument, use the current buffer file."
                                 "no_gyid"))
                         words)
                   (setq cnt (+ 1 cnt)))
-		;; this adds the sw to the hashtable 
+		;; this adds the sw to the hashtable
 		(set (make-local-variable 'concept-word) hw)
 		(org-map-entries 'mandoku-tls-add-to-hash "+LEVEL==4" 'tree)
 		(puthash uuid (list name char) mandoku-tls-concept-words)
@@ -546,7 +557,7 @@ When called without argument, use the current buffer file."
 )
 
 (defun mandoku-tls-helm-concepts-candidates ()
-  "Helm source for concepts"
+  "Helm source for concepts."
   (let (l x)
     (maphash (lambda (k v)
 	       (push k l)
@@ -559,7 +570,7 @@ When called without argument, use the current buffer file."
   )
 
 (defun mandoku-tls-helm-tree-candidates (concept)
-  "Helm source for concept tree"
+  "Helm source for CONCEPT tree."
   (let (l x)
     (setq x concept)
     (push x l)
@@ -572,7 +583,7 @@ When called without argument, use the current buffer file."
     (delq nil l))
   )
 
-(defvar mandoku-tls-helm-source 
+(defvar mandoku-tls-helm-source
   '((name . "TLS Concepts")
     (fuzzy-match . t)
     (multimatch . t)
@@ -605,7 +616,7 @@ When called without argument, use the current buffer file."
 ;  ("a" mandoku-tls-make-attribution "TLS: Make new attribution\n" :exit t)
 ;  ("n" mandoku-tls-new-swl "TLS: Assosiate new annotation with location in text\n" :exit t)
   ("z" mandoku-tls-new-syntactic-word "TLS: Make new syntactic word" :exit t)
-;  ("i" mandoku-tls-insert-new-annot "TLS insert new annotation\n" :exit t) 
+;  ("i" mandoku-tls-insert-new-annot "TLS insert new annotation\n" :exit t)
 )
 
 (defhydra hydra-tls-dict (:color blue)
@@ -627,7 +638,7 @@ When called without argument, use the current buffer file."
 ;  ("a" mandoku-tls-make-attribution "TLS: Make new attribution\n" :exit t)
 ;  ("n" mandoku-tls-new-swl "TLS: Assosiate new annotation with location in text\n" :exit t)
 ;  ("z" mandoku-tls-new-syntactic-word "TLS: Make new syntactic word\n" :exit t)
-;  ("i" mandoku-tls-insert-new-annot "TLS insert new annotation\n" :exit t) 
+;  ("i" mandoku-tls-insert-new-annot "TLS insert new annotation\n" :exit t)
 )
   
 
@@ -648,7 +659,7 @@ When called without argument, use the current buffer file."
 
 
 (defun mandoku-tls-helm-syn-func-candidates ()
-  "Helm source for syntactic function"
+  "Helm source for syntactic function."
   (let (l x)
     (maphash (lambda (k v)
 	       (when (plist-get v :name)
@@ -697,7 +708,8 @@ When called without argument, use the current buffer file."
 )
 
 (defun mandoku-tls-show-words (&optional uuid-hw)
-  "Show the words related to the current heading"
+  "Show the words related to the current heading.
+Optional argument UUID-HW Use a different uuid than the one at point."
   (interactive)
   (if (or uuid-hw (looking-at "\\*\\*\\*\\* "))
       (let ((uuid (or (car uuid-hw) (org-entry-get (point) "CUSTOM_ID")))
@@ -730,11 +742,11 @@ When called without argument, use the current buffer file."
   (let ((current-prefix-arg 4))
     (call-interactively #'mandoku-tls-procline)))
 
-(defun mandoku-tls-procline (&optional inp) 
+(defun mandoku-tls-procline (&optional inp)
   (interactive
    (if (use-region-p)
        (list (buffer-substring-no-properties (region-beginning) (region-end))))
-   )  
+   )
   (unless mandoku-tls-initialized-p
     (mandoku-tls-initialize))
   (when (derived-mode-p 'mandoku-view-mode)
@@ -779,7 +791,8 @@ When called without argument, use the current buffer file."
     (switch-to-buffer-other-window result-buffer t)))
 
 (defun mandoku-tls-readings-format (txx)
-  "Format the readings plist."
+  "Format the readings plist.
+Argument TXX The plist from which the readings are extracted."
   (concat
    (plist-get txx :pinyin) " (OC: "
    (plist-get txx :oc) " MC: "
@@ -793,7 +806,7 @@ When called without argument, use the current buffer file."
    " 】"))
 
 (defun mandoku-tls-get-readingsline (word)
-  "Loop through word and return a list of lines that contain pinyin/oc/mc/fq/gloss"
+  "Loop through WORD and return a list of lines that contain pinyin/oc/mc/fq/gloss."
   (let ((wl (mapcar 'char-to-string (string-to-list word))) l tx)
     (dolist (w wl)
       (setq tx (gethash w mandoku-tls-syllables-tab))
@@ -827,7 +840,7 @@ When called without argument, use the current buffer file."
       (insert "\n*** " c
 	      (if (not short)
 		  (string-join (mapcar (lambda (x)
-				     (when (string-match c (cadr x)) 
+				     (when (string-match c (cadr x))
 				       (concat "\n**** " (string-join x " ") "\n" ))
 				     )
 				       wlist) "") "")
@@ -838,7 +851,8 @@ When called without argument, use the current buffer file."
 
 
 (defun mandoku-tls-make-attribution (&optional att)
-  "This makes an attribution for the current line"
+  "This makes an attribution for the current line.
+Optional argument ATT The attribution to use when called from a lisp function."
   (interactive)
   (let* ((inp (or mandoku-tls-inp
 		  (mandoku-remove-punct-and-markup
@@ -884,7 +898,7 @@ When called without argument, use the current buffer file."
 		  (org-get-heading)))
 	  (setq swl-line
 		(concat char " "
-			(replace-regexp-in-string " \\([NV]\\) " "\t\\1 " 
+			(replace-regexp-in-string " \\([NV]\\) " "\t\\1 "
 						  (replace-regexp-in-string "\\[\\[tls:concept" "\t[[tls:concept" hw))				 ))
 	  (mandoku-tls-insert-new-annot swl-line)
       
@@ -1031,7 +1045,7 @@ When called without argument, use the current buffer file."
   ))
 
 (defun mandoku-tls-insert-new-annot (&optional ann)
-  "Insert the annotation"
+  "Insert the annotation."
   (interactive)
   (let ((ann (or ann (mandoku-tls-compose-new-annot)))
 	(case-fold-search t))
@@ -1041,7 +1055,7 @@ When called without argument, use the current buffer file."
     (save-buffer))))
 
 (defun mandoku-tls-insert-new-annot-1 (ann)
-  "Really insert the annotation. "
+  "Really insert the annotation."
   (forward-line)
   (beginning-of-line)
   (if (looking-at ":zhu:")
@@ -1073,7 +1087,7 @@ When called without argument, use the current buffer file."
 ;; add the swl
 (defun mandoku-tls-swl-tab-change (state)
   (interactive)
-  (cond 
+  (cond
    ((and (eq major-mode 'mandoku-dict-mode)
 	     (memq state '(children subtree)))
     (save-excursion
@@ -1085,7 +1099,7 @@ When called without argument, use the current buffer file."
 	      (insert (concat (plist-get i :line) "\n")))
 	    (message uuid))))))))
 
-(add-hook 'org-cycle-hook 'mandoku-tls-swl-tab-change) 
+(add-hook 'org-cycle-hook 'mandoku-tls-swl-tab-change)
 
 ;; add link type tls
 (org-add-link-type "tls" 'mandoku-tls-follow-link)
@@ -1093,12 +1107,12 @@ When called without argument, use the current buffer file."
 
 
 (defun mandoku-tls-follow-link (link)
-  "Follow the tls link"
-; links for concept, syn-func, sem-feat  
+  "Follow the tls link."
+; links for concept, syn-func, sem-feat
   (let* ((type (car (split-string link ":")))
 	 (rest (cdr (split-string link ":")))
 	 )
-    (cond 
+    (cond
      ((equal type "concept")
       (message type)
       (org-open-file (concat mandoku-tls-lexicon-path "concepts/" (car rest) ".org") t nil (nth 2 rest))
@@ -1185,7 +1199,7 @@ When called without argument, use the current buffer file."
   (let* ((skip (or n 1))
 	 (step (if (< 0 skip) 1 -1)))
     (forward-line step)
-    (cond 
+    (cond
      ((looking-at ":end")
       (if (= step 1)
 	  (forward-line step)
@@ -1198,10 +1212,10 @@ When called without argument, use the current buffer file."
 	(forward-line step))))))
 
 (defun mandoku-tls-find-para ()
-  "Get the bounds of the current paragraph, in the Mandoku
-sense. A paragraph is bounded by empty lines, headlines, but not
+  "Get the bounds of the current paragraph, in the Mandoku sense.
+A paragraph is bounded by empty lines, headlines, but not
 interrupted by drawers, these are considered part of the
-paragraph. "
+paragraph."
   (save-excursion
     (let* ((max 20)
 	   (p (point))
@@ -1277,7 +1291,7 @@ paragraph. "
 
 (defun mandoku-tls-id-new ()
   "Get the id in a compatible way."
-  (replace-in-string (downcase (org-id-new "uuid")) ":" "-")) 
+  (replace-in-string (downcase (org-id-new "uuid")) ":" "-"))
 
 ;; maintenance and exploring
 
@@ -1310,7 +1324,7 @@ paragraph. "
 ;    (define-key map "e" 'view-mode)
 ;    (define-key map "a" 'redict-get-line)
          map)
-  "Keymap for mandoku-tls-view mode"
+  "Keymap for mandoku-tls-view mode."
 )
 
 ;(define-key mandoku-tls-view-mode-map (kbd "<f8>") 'hydra-tls-view/body)
@@ -1337,7 +1351,7 @@ paragraph. "
 ;;;
 
 (defun mandoku-tls-startpage ()
-  "Display overview information about the TLS Database"
+  "Display overview information about the TLS Database."
   (unless mandoku-tls-initialized-p
     (mandoku-tls-initialize))
   (with-current-buffer (get-buffer-create "*TLS Overview*")
@@ -1355,7 +1369,7 @@ paragraph. "
   
 (defun mandoku-tls-subtree-insert (e w)
   (let ((w (concat w "*")) x)
-    (when (file-exists-p (concat mandoku-tls-lexicon-path "concepts/" e ".org")) 
+    (when (file-exists-p (concat mandoku-tls-lexicon-path "concepts/" e ".org"))
       (insert (format "\n%s [[tls:concept:%s][%s]]" w e e "\n" ))
 ;      (insert (format "\n%s %s %d" w e (length (plist-get (gethash e mandoku-tls-concepts) :words)) "\n" ))
 ;      (insert (format "\n%s %s %s" w e (mapconcat 'identity (plist-get (gethash e mandoku-tls-concepts) :words) " ") "\n" ))
@@ -1381,7 +1395,7 @@ paragraph. "
 ;;     (maphash (lambda (kk vv) (setq myList (cons (list (plist-get vv :name) kk ) myList))) hashtable)
 ;;     myList
 ;;   )
-;; )    
+;; )
 
 
 (defun mandoku-tls-number-of-subentries (&optional pos match scope level)
@@ -1420,7 +1434,7 @@ By default, all subentries are counted; restrict with LEVEL."
     (list src date)))
 
 (defun mandoku-tls-zhu-write-tls-zhu ()
-  "Write all zhu from the text in local files"
+  "Write all zhu from the text in local files."
   (let ((textlist (sort (mandoku-list-local-texts) 'string<))
         files)
     (dolist (text textlist)
@@ -1450,7 +1464,7 @@ By default, all subentries are counted; restrict with LEVEL."
         (insert "# -*- mode: mandoku-view; -*-
 #+TITLE: Notes for " title  " " fn "
 #+DATE: " (format-time-string "%Y-%m-%dT%T%z\n" (current-time))
-"#+PROPERTY: COMMIT " commit "\n" 
+"#+PROPERTY: COMMIT " commit "\n"
 ))
       (while (re-search-forward mandoku-annot-start nil t)
         (setq beg (point))
@@ -1573,13 +1587,13 @@ By default, all subentries are counted; restrict with LEVEL."
 ;;                      :action '(("New attribution" . mandoku-tls-insert-new-annot-1)
 ;;                                ("Copy to clipboard" . (lambda (candidate)
 ;;                                                         (kill-new candidate))))
-;; 		     :candidates 
+;; 		     :candidates
 ;; 	  :buffer "*TLS Syntactic words*")
 ;; ))
 
 ;; directly access the char
 (defun mandoku-tls-syll-info (&optional ch)
-  "We override the function defined in helm-charinfo"
+  "We override the function defined in helm-charinfo."
   (unless mandoku-tls-syllables-tab
     (mandoku-tls-read-syllables-org))
   (let ((char (or ch mandoku-tls-current-char ))
@@ -1614,7 +1628,7 @@ By default, all subentries are counted; restrict with LEVEL."
 
 
 (defun mandoku-tls-select-readings (&optional pat)
-  "Get the readings for the character "
+  "Get the readings for the character."
   (interactive)
   (let* ((mandoku-tls-current-char (or pat (char-to-string (char-after))))
 	 (source `((name . "Select lexeme")
@@ -1632,7 +1646,7 @@ By default, all subentries are counted; restrict with LEVEL."
 	:input pat)))
 
 (defun mandoku-tls-fix-taxonomy ()
-  "Should be obsolete now." 
+  "Should be obsolete now."
   (let (x beg end
 	(case-fold-search nil))
     (goto-char (point-min))
@@ -1751,11 +1765,11 @@ By default, all subentries are counted; restrict with LEVEL."
     ))
 
 (defun mandoku-tls-wg-helm (&optional candidate)
-  "This is to call up the things in *tls-grep*"
+  "This is to call up the things in *tls-grep*."
   (let (l search-string)
     (unless mandoku-tls-chant-titles
       (when (file-exists-p (concat mandoku-tls-chant-path "titles.txt"))
-	(setq mandoku-tls-chant-titles (make-hash-table :test 'equal)) 
+	(setq mandoku-tls-chant-titles (make-hash-table :test 'equal))
 	(with-current-buffer (find-file-noselect (concat mandoku-tls-chant-path "titles.txt"))
 	  (let ((sb (split-string (buffer-string) "\n")) line title)
 	    (dolist (s sb)
@@ -1764,8 +1778,8 @@ By default, all subentries are counted; restrict with LEVEL."
 		(setq title (if (string-match "（\\([^）]+\\)）" (cadr line))
 				(match-string 1 (cadr line))
 			      (cadr line)))
-		(setq title (replace-regexp-in-string "\\(作者\\)?不詳-" "" 
-		    (replace-regexp-in-string "[一二三四五六七八九十]+卷" "" 
+		(setq title (replace-regexp-in-string "\\(作者\\)?不詳-" ""
+		    (replace-regexp-in-string "[一二三四五六七八九十]+卷" ""
 		      (replace-regexp-in-string "卷附.*" "卷" title)))))
 	      (puthash (car line) title mandoku-tls-chant-titles))))))
     (with-current-buffer "*tls-grep*"
@@ -1796,7 +1810,7 @@ By default, all subentries are counted; restrict with LEVEL."
     ))
 
 (defun mandoku-tls-grep-work-file (search-string)
-  "Updates the index for local files"
+  "Updates the index for local files."
   (interactive)
   (let ((grep-buffer (get-buffer-create "*tls-grep*")))
     (with-current-buffer grep-buffer
@@ -1887,7 +1901,7 @@ By default, all subentries are counted; restrict with LEVEL."
 ;; this will also be called  from a map-entry call over the whole file
 
 (defun mandoku-tls-read-more-attributions ()
-  "Get the attributions in the lexicon/misc files"
+  "Get the attributions in the lexicon/misc files."
   (let ((p (point))
         (hw (org-get-heading ))
         (end (org-end-of-subtree))
