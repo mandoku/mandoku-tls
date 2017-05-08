@@ -8,7 +8,7 @@
 ;; URL: https://github.com/krp-zinbun/tls
 ;; Version: 0.1
 ;; Keywords: convenience
-;; Package-Requires: ((mandoku "20160301.1705") (github-clone "20150705.1705"))
+;; Package-Requires: ((emacs "24.4") (mandoku "20170301") (github-clone "20150705.1705"))
 ;; This file is not part of GNU Emacs.
 
 (require 'mandoku)
@@ -261,12 +261,6 @@
     (setq end (- (match-beginning 0) 1))
     (setq def  (mandoku-trim-and-star (buffer-substring-no-properties beg end)))
     (puthash uuid (list :name hw :def def) mandoku-tls-syn-func-tab))))
-
-(defmacro measure-time (&rest body)
-  "Measure the time it takes to evaluate BODY."
-  `(let ((time (current-time)))
-     ,@body
-     (message "%.06f" (float-time (time-since time)))))
 
 (defun mandoku-tls-read-zhu-to-swl-file ()
   "We set mandoku-tls-zhu-tab-file to a file we want to write to, then call mandoku-tls-read-zhu-dir"
@@ -1149,7 +1143,7 @@ When called without argument, use the current buffer file."
   :type 'string
   :group 'mandoku-tls)
 
-(defvar mandoku-grep-split-line-regexp "^\\([[:lower:][:upper:]]?:?.*?\\):\\([0-9]+\\):\\(.*\\)")
+(defvar mandoku-tls-grep-split-line-regexp "^\\([[:lower:][:upper:]]?:?.*?\\):\\([0-9]+\\):\\(.*\\)")
 
 (defvar mandoku-tls-re
   (concat "\\(" (mapconcat
@@ -1526,14 +1520,6 @@ By default, all subentries are counted; restrict with LEVEL."
      (reverse matches))))
 
 
-
-(defun test()
-  (while (not (eobp))
-    (org-next-visible-heading 1)
-    (end-of-line)
-    (insert (format " / %d subheadings" (mandoku-tls-number-of-subentries)))
-    ))
-
 ;; helm for syntactic word selection
 ;; build the data, select candidate, access the data
 
@@ -1621,7 +1607,7 @@ By default, all subentries are counted; restrict with LEVEL."
     (nreverse l)
     ))
 
-(defun m-t-result (candidate)
+(defun mandoku-tls-result (candidate)
   (let* ((current-char (car (split-string candidate)))
 	 (data (mandoku-tls-syll-info current-char)))
   (kill-new (plist-get (car (cdr (assoc (helm-get-selection) data))) :uuid ))))
@@ -1639,7 +1625,7 @@ By default, all subentries are counted; restrict with LEVEL."
 						   (let ((cc (split-string can)))
 						     (kill-new (format "%s %s (OC:%s MC:%s)" (car cc) (cadr cc)
 							     (nth 2 cc) (nth 3 cc))))))
-			      ("Readings uuid" .  m-t-result))
+			      ("Readings uuid" .  mandoku-tls-result))
 			   ))))
   (helm :sources source
 	:buffer "*helm dictionary*"
@@ -1732,7 +1718,7 @@ By default, all subentries are counted; restrict with LEVEL."
 	l )
     (dolist (s res)
       (unless (string-match "tls:concept" s)
-	(when (string-match mandoku-grep-split-line-regexp s)
+	(when (string-match mandoku-tls-grep-split-line-regexp s)
 	  (let* ((l1 (cl-loop for n from 1 to 3 collect (match-string n s)))
 		 (fname (car-safe l1))
 		 (txt (split-string (file-name-base fname) "_"))
@@ -1785,7 +1771,7 @@ By default, all subentries are counted; restrict with LEVEL."
     (with-current-buffer "*tls-grep*"
       (setq search-string (car (split-string (thing-at-point 'line) "\n")))
       (dolist (s (split-string (buffer-string) "\n"))
-	(when (string-match mandoku-grep-split-line-regexp s)
+	(when (string-match mandoku-tls-grep-split-line-regexp s)
 	  (let* ((l1 (cl-loop for n from 1 to 3 collect (match-string n s)))
 		 (fname (file-name-sans-extension (file-name-nondirectory (car-safe l1))))
 		 (txt (split-string (file-name-base fname) "_"))
@@ -1919,3 +1905,4 @@ By default, all subentries are counted; restrict with LEVEL."
     (mapconcat 'identity s (propertize hi 'face 'hi-yellow))))
 
 (provide 'mandoku-tls)
+;;; mandoku-tls.el ends here
