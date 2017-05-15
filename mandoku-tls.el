@@ -8,7 +8,7 @@
 ;; URL: https://github.com/krp-zinbun/tls
 ;; Version: 0.1
 ;; Keywords: convenience
-;; Package-Requires: ((emacs "24.4") (mandoku "20170301") (github-clone "20150705.1705"))
+;; Package-Requires: ((emacs "24.4") (mandoku "20170301") (github-clone "20150705.1705") (hydra "20160913.216") (helm "1.7.0"))
 ;; This file is not part of GNU Emacs.
 
 
@@ -18,17 +18,20 @@
 (require 'mandoku)
 (require 'mandoku-dict)
 (require 'mandoku-annot)
-;(require 'helm-charinfo)
+(require 'hydra)
+(require 'helm-charinfo)
 (require 'subr-x)
 
 ;;; Code:
 
-(defvar mandoku-tls-root-path
+(defgroup mandoku-tls nil
+  "Emacs interface to the TLS database."
+  :group 'external)
+
+(defconst mandoku-tls-root-path
   (or mandoku-base-dir
       (replace-in-string (file-name-directory (or byte-compile-current-file
                                              load-file-name
-                                             buffer-file-name)) "mandoku-tls/" "")))
-
 (defcustom mandoku-tls-lexicon-path
   (concat mandoku-tls-root-path "tls/lexicon/")
   "Path to TLS lexicon."
@@ -640,23 +643,6 @@ When called without argument, use the current buffer file."
 ;  ("z" mandoku-tls-new-syntactic-word "TLS: Make new syntactic word\n" :exit t)
 ;  ("i" mandoku-tls-insert-new-annot "TLS insert new annotation\n" :exit t)
 )
-  
-
-(global-set-key (kbd "M-s t") 'mandoku-tls-concepts-helm)
-;;
-;; for tls
-(global-unset-key (kbd "M-t")) ; was transpose-word
-(global-set-key (kbd "M-t c") 'mandoku-tls-concepts-helm)
-(global-set-key (kbd "M-t w") 'mandoku-tls-show-words)
-(global-set-key (kbd "M-t l") 'mandoku-tls-procline)
-(global-set-key (kbd "M-t s") 'mandoku-tls-syn-func-helm)
-(global-set-key (kbd "M-t a") 'mandoku-tls-make-attribution)
-(global-set-key (kbd "M-t n") 'mandoku-tls-new-swl)
-;(global-set-key (kbd "M-t x") 'mandoku-tls-create-new-annot)
-(global-set-key (kbd "M-t z") 'mandoku-tls-new-syntactic-word)
-(global-set-key (kbd "M-t u") 'mandoku-tls-new-uuid-for-heading)
-(global-set-key (kbd "M-t i") 'mandoku-tls-insert-new-annot)
-
 
 (defun mandoku-tls-helm-syn-func-candidates ()
   "Helm source for syntactic function."

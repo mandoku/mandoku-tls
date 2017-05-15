@@ -15,6 +15,11 @@
 
 (require 'helm)
 
+(defgroup helm-charinfo nil
+  "Helm interface for the lookup of information on Chinese
+characters, as used in mandoku-tls."
+  :group 'mandoku-tls)
+
 (defcustom helm-charinfo-follow-delay 1
   "Delay before Dictionary summary pops up."
   :type 'number
@@ -26,14 +31,10 @@
   :group 'helm-charinfo)
 
 (defcustom helm-charinfo-unihan-readings
-  (car
-   (remove nil
-	   (cl-mapcar  (lambda (x) (car (file-expand-wildcards x)))
-		       (list "/Users/*/src/Unihan/Unihan_Readings.txt" ;;my system :-(
-			     (concat mandoku-sys-dir "Unihan_Readings.txt")
-			     ;;TODO Add suitable paths for other operating system
-			     ))))
-  "Location of unihan files."
+  (if (boundp 'mandoku-sys-dir)
+      (concat mandoku-sys-dir "Unihan_Readings.txt")
+    "")
+  "Location of local copy of Unihan file for readings."
   :type 'string
   :group 'helm-charinfo)
 
