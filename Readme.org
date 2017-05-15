@@ -1,5 +1,7 @@
 #+TITLE: Mandoku TLS
 
+[[http://melpa.org/#/mandoku][http://melpa.org/packages/mandoku-tls-badge.svg]]
+
 This Emacs package provides access to the Thesaurus Linguae Sericae
 (TLS) initiated and directed by Christoph Harbsmeier. It will use the
 lexicon database from https://github.com/tls-kr/tls-org.
