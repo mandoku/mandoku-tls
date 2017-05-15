@@ -8,7 +8,7 @@
 ;; URL: https://github.com/krp-zinbun/tls
 ;; Version: 0.1
 ;; Keywords: convenience
-;; Package-Requires: ((emacs "24.4") (mandoku "20170301") (github-clone "20150705.1705") (hydra "20160913.216") (helm "1.7.0"))
+;; Package-Requires: ((emacs "24.4") (mandoku "20170301") (github-clone "20150705.1705") (hydra "20160913.216") (helm "1.7.0") (org "9.0"))
 ;; This file is not part of GNU Emacs.
 
 
@@ -16,6 +16,7 @@
 ;; 
 
 (require 'mandoku)
+(require 'org)
 (require 'mandoku-dict)
 (require 'mandoku-annot)
 (require 'hydra)
