@@ -1,5 +1,0 @@
-(define-package "mandoku-tls" "0.1" "A tool to access the Thesaurus Linguae Sericae" 
-    '(
-      (mandoku "20170301")
-      )
-)
