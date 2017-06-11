@@ -8,7 +8,7 @@
 ;; URL: https://github.com/krp-zinbun/tls
 ;; Version: 0.1
 ;; Keywords: convenience
-;; Package-Requires: ((emacs "24.4") (mandoku "20170301") (github-clone "20150705.1705") (hydra "20160913.216") (helm "1.7.0") (org "9.0"))
+;; Package-Requires: ((emacs "24.4") (mandoku "20170301") (github-clone "0.2") (hydra "0.13.6") (helm "1.7.0") (org "9.0") (helm-charinfo "20170601"))
 ;; This file is not part of GNU Emacs.
 
 
@@ -32,7 +32,7 @@
 (defconst mandoku-tls-root-path
   (or mandoku-base-dir
       (replace-in-string (file-name-directory (or byte-compile-current-file
-                                             load-file-name
+                                             load-file-name)))))
 (defcustom mandoku-tls-lexicon-path
   (concat mandoku-tls-root-path "tls/lexicon/")
   "Path to TLS lexicon."
@@ -90,7 +90,7 @@
   "Compound types in TLS.")
 (defvar mandoku-tls-syllables-org (concat mandoku-tls-lexicon-path "core/syllables.org") "Syllables.")
 (defvar  mandoku-tls-syllables-index (concat mandoku-tls-lexicon-path "index/syllables.txt") "Index to syllables.")
-
+(defvar mandoku-tls-taxonomy-file nil)
 (defvar mandoku-tls-initialized-p nil "Say whether TLS has been initialized.")
 
 
@@ -227,7 +227,8 @@
       (with-current-buffer (find-file-noselect mandoku-tls-syn-func-index )
 	(dolist (l (split-string (buffer-substring-no-properties (point-min) (point-max)) "\n$$\n"))
 	  (let* ((tmp (split-string l "\t")))
-	    (puthash (nth 0 tmp) (list :name (nth 1 tmp) :def (nth 2 tmp)) mandoku-tls-syn-func-tab)))
+	    (when (> (length tmp) 3)
+	      (puthash (nth 0 tmp) (list :name (nth 1 tmp) :def (nth 2 tmp) :pointers (read (nth 3 tmp))) mandoku-tls-syn-func-tab))))
 	(kill-buffer))
     (when (file-exists-p mandoku-tls-syn-func-org)
       (let (pos)
@@ -244,10 +245,12 @@
     (with-current-buffer (find-file-noselect mandoku-tls-syn-func-index )
       (maphash (lambda (k v)
 		 (insert
-		  (format "%s\t%s\t%s\n$$\n"
+		  (format "%s\t%s\t%s\t%S\n$$\n"
 			  k
 			  (plist-get v :name)
-			  (plist-get v :def))))
+			  (plist-get v :def)
+			  (plist-get v :pointers)
+			  )))
 		  mandoku-tls-syn-func-tab)
 		 (save-buffer)
 		 (kill-buffer)))
@@ -260,19 +263,42 @@
     (mandoku-trim-and-star (cadr (split-string (thing-at-point 'line t) sp)))))
 
 (defun mandoku-tls-get-syn-func-item ()
-  "This extracts the syn-func from a line with a link."
+  "This extracts the syn-func from an entry in the syn-func.org file and adds it to mandoku-tls-syn-func-tab."
   (save-excursion
-  (let ((hw (mandoku-tls-get-special-line-rest (point) "= "))
-	(uuid (mandoku-tls-get-special-line-rest (save-excursion (search-forward "CUSTOM_ID:" nil t)) ": "))
-	beg end def)
-    (search-forward "** DEF" nil t)
-    (next-line 1)
-    (setq beg (point))
-    (search-forward "\n*" nil t)
-    (setq end (- (match-beginning 0) 1))
-    (setq def  (mandoku-trim-and-star (buffer-substring-no-properties beg end)))
-    (puthash uuid (list :name hw :def def) mandoku-tls-syn-func-tab))))
+    (let ((cp (point))
+	  (hw (mandoku-tls-get-special-line-rest (point) "= "))
+	  (uuid (mandoku-tls-get-special-line-rest (save-excursion (search-forward "CUSTOM_ID:" nil t)) ": "))
+	  (eot (org-end-of-subtree))
+	  beg end def pointers)
+      (goto-char cp)
+      (search-forward "** DEFINITION" nil t)
+      (next-line 1)
+      (setq beg (point))
+      (search-forward "\n*" nil t)
+      (setq end (- (match-beginning 0) 1))
+      (setq def  (mandoku-trim-and-star (buffer-substring-no-properties beg end)))
+    ;; get pointers
+      (goto-char cp)
+      (when (search-forward "* TAXONOMY" eot t)
+	(setq pointers (mandoku-tls-read-synlink-list)))
+      (puthash uuid (list :name hw :def def :pointers pointers) mandoku-tls-syn-func-tab)))
+  )
+;))
 
+(defun mandoku-tls-read-synlink-list ()
+  "This is called with point at the beginning of a list of links."
+  (save-excursion
+    (let ((p (point))
+	  (limit (org-end-of-subtree))
+	  m1 m3
+	  l )
+      (goto-char p)
+      (while (re-search-forward org-bracket-link-regexp limit t)
+	(setq m1 (org-match-string-no-properties 1))
+	(setq m3 (org-match-string-no-properties 3))
+	(push (cons (substring m1 1) m3) l))
+      (reverse l))))
+  
 (defun mandoku-tls-read-zhu-to-swl-file ()
   "We set mandoku-tls-zhu-tab-file to a file we want to write to, then call `mandoku-tls-read-zhu-dir'."
   (setq mandoku-tls-zhu-tab-buffer (find-file-noselect mandoku-tls-syn-word-locs))
@@ -307,7 +333,6 @@ Argument FILE The file to be read."
     (unless (org-entry-get (point) "CONCEPT")
       (message (format "%s %s" (buffer-file-name)  (point))))))
 
-
 (defun mandoku-tls-get-zhu-item ()
   (let ((hl (substring-no-properties (org-get-heading t t)))
 	(p (point))
@@ -338,7 +363,6 @@ Argument FILE The file to be read."
 	    (puthash concept (cons line nil)  mandoku-tls-swl))))
     )))
 
-    
 (defun mandoku-tls-read-swl ()
   "Read the syntactic word locations table."
   (setq mandoku-tls-swl (make-hash-table :test 'equal))
@@ -410,7 +434,6 @@ Argument FILE The file to be read."
 	(message tchar)
 	)))))
 
-
 (defun mandoku-tls-read-concepts ()
   "Read the concept files into the hash table."
   ;; all these hashtables are populated here from the concepts files
@@ -422,6 +445,7 @@ Argument FILE The file to be read."
     (message file)
     (mandoku-tls-read-concept-file (concat mandoku-tls-lexicon-path "concepts/" file)))
   (mandoku-tls-concepts-add-uplink))
+
 ;;[2017-04-20T15:41:32+0900] TODO: also need to add up-links to those in "N/A" that do not have an uplink yet...
 (defun mandoku-tls-concepts-add-uplink ()
   "Now add the uplink to those concepts referenced in \"NARROW CONCEPTS\"."
@@ -841,7 +865,6 @@ Argument TXX The plist from which the readings are extracted."
      (insert "\n")
      )))
 
-
 (defun mandoku-tls-make-attribution (&optional att)
   "This makes an attribution for the current line.
 Optional argument ATT The attribution to use when called from a lisp function."
@@ -981,7 +1004,8 @@ Optional argument ATT The attribution to use when called from a lisp function."
 	(save-buffer)
 	(mandoku-tls-read-concept-file fp)
 	(message "Please enter the definition"))
-    concept)))
+      concept)))
+
 (defun mandoku-tls-can-add-word-p ()
   "See if we can add a syntactic word here."
   (save-excursion
@@ -1118,7 +1142,6 @@ Optional argument ATT The attribution to use when called from a lisp function."
       (org-open-file
        (concat mandoku-tls-text-path "/" (car rest) "/" (car rest) "_"
 	       (car (split-string (cadr rest) "-")) ".txt") t nil (cadr  rest))))))
-
 
 ;;* font lock for org-ref
 
@@ -1276,9 +1299,6 @@ paragraph."
 	(insert (cdr l))))
     ))
 
-      
-      
-
 ;;
 
 (defun mandoku-tls-id-new ()
@@ -1354,7 +1374,15 @@ paragraph."
     (insert (format "\n - Number of syntactic words: %d\n" (hash-table-count mandoku-tls-words)))
     (insert (format "\n - Number of annotations: %d\n" (hash-table-count mandoku-tls-swl)))
     (insert "\n* Database access\n")
+    (insert "    For access to the database and a menu of options,
+    please press the F8 key or [[elisp:hydra-tls/body()][click here]].\n
+    If you use the link, press 'C' (for concepts) or 'S' for syntactic
+    functions.")
+    (if (file-exists-p mandoku-tls-taxonomy-file)
+	(insert (format "\n    [[file:%s][Click here to open the taxonomy file]]" mandoku-tls-taxonomy-file)
+		))
     (mandoku-tls-view-mode)
+    (setq org-confirm-elisp-link-function nil)
     )
   )
 
@@ -1507,7 +1535,6 @@ By default, all subentries are counted; restrict with LEVEL."
       (kill-buffer)
     )))))
 
-
 (defun mandoku-tls-re-seq (string)
   "Get a list of all regexp matches in a string, n is the matchstring, if relevant."
   (save-match-data
@@ -1524,7 +1551,6 @@ By default, all subentries are counted; restrict with LEVEL."
                  m3)
                 matches)))
      (reverse matches))))
-
 
 ;; helm for syntactic word selection
 ;; build the data, select candidate, access the data
@@ -1912,3 +1938,4 @@ By default, all subentries are counted; restrict with LEVEL."
 
 (provide 'mandoku-tls)
 ;;; mandoku-tls.el ends here
+
