@@ -5,8 +5,9 @@
 ;; Copyright (c) 2016-2017 Christian Wittern
 ;;
 ;; Author: Christian Wittern <cwittern@gmail.com>
-;; URL: https://github.com/krp-zinbun/tls
+;; URL: https://github.com/mandoku/mandoku-tls
 ;; Version: 0.1
+;; License: GPL v3, or any later version
 ;; Keywords: convenience
 ;; Package-Requires: ((emacs "24.4") (mandoku "20170301") (github-clone "0.2") (hydra "0.13.6") (helm "1.7.0") (org "9.0") (helm-charinfo "20170601"))
 ;; This file is not part of GNU Emacs.
