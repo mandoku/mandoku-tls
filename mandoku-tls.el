@@ -123,7 +123,7 @@
       (with-current-buffer (find-file-noselect ct)
 	(dolist (l (split-string (buffer-substring-no-properties (point-min) (point-max)) "\n"))
 	  (let* ((tmp (split-string l "\t"))
-		 (char (format "%c" (string-to-int (nth 0 tmp) 16))))
+		 (char (format "%c" (string-to-number (nth 0 tmp) 16))))
 	    (puthash char (format "(%s,%s/%s)" (nth 2 tmp) (nth 3 tmp) (nth 4 tmp) )
 		     mandoku-tls-character-tab)))))))
 
@@ -874,8 +874,8 @@ Optional argument ATT The attribution to use when called from a lisp function."
 		  (mandoku-remove-punct-and-markup
 		   (mandoku-get-line))))
 	 mandoku-tls-concept
-	 (start (- (string-to-int (read-from-minibuffer (concat inp ": Please enter position of first character to use: ") "1" nil )) 1))
-	 (slength (string-to-int (read-from-minibuffer (concat inp ": Please enter number of characters to use: ") "1" nil )))
+	 (start (- (string-to-number (read-from-minibuffer (concat inp ": Please enter position of first character to use: ") "1" nil )) 1))
+	 (slength (string-to-number (read-from-minibuffer (concat inp ": Please enter number of characters to use: ") "1" nil )))
 	 (word (substring inp start (+ start slength)))
 	 ;;
 	 concept readings)
@@ -1769,7 +1769,7 @@ By default, all subentries are counted; restrict with LEVEL."
     (helm :sources (list (helm-build-sync-source (format "Grep %s" search-string)
 			   :action '(("Open file" . (lambda (s)
                                                 (find-file-other-window (car s))
-                                                (goto-line (string-to-int (cadr s)))
+                                                (goto-line (string-to-number (cadr s)))
 						(hi-lock-mode t)
 						(highlight-regexp
 						 (mapconcat 'char-to-string (string-to-list (nth 2 s)) "\\(<[^>]*>\\|¶\\)*")
@@ -1820,7 +1820,7 @@ By default, all subentries are counted; restrict with LEVEL."
     (helm :sources (helm-build-sync-source (format "Grep %s" search-string)
                      :action '(("Open file" . (lambda (s)
                                                 (find-file-other-window (car s))
-                                                (goto-line (string-to-int (cadr s)))
+                                                (goto-line (string-to-number (cadr s)))
 						(hi-lock-mode t)
 						(highlight-regexp (nth 2 s))))
                                )
